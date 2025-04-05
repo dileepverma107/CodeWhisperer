@@ -31,7 +31,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/codewhisperer.git
+git clone https://github.com/dileepverma107/codewhisperer.git
 
 # Navigate to the project
 cd codewhisperer
