@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeWhisperer - AI Interview Companion</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Add Prism.js for code syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
+  <style>
+    #voice-section {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+    
+    #voice-question {
+      min-height: 60px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin: 10px 0;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: white;
+    }
+    
+    #voice-status {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+      height: 20px;
+    }
+    
+    #voice-controls {
+      display: flex;
+      gap: 10px;
+    }
+    
+    #voice-record-btn {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    #voice-record-btn:hover {
+      background-color: #3367d6;
+    }
+    
+    #voice-record-btn.recording {
+      background-color: #ea4335;
+      animation: pulse 1.5s infinite;
+    }
+    
+    #voice-analyze-btn {
+      background-color: #34a853;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    #voice-analyze-btn:hover:not(:disabled) {
+      background-color: #2e8b57;
+    }
+    
+    #voice-analyze-btn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .recording {
+      animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+    
+    .interim {
+      color: gray;
+      font-style: italic;
+    }
+    
+    .manual-input {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px dashed #ccc;
+    }
+    
+    .manual-input h4 {
+      margin: 0 0 8px 0;
+      color: #555;
+      font-size: 14px;
+    }
+    
+    .manual-input textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-family: inherit;
+    }
+    
+    #use-manual-input-btn {
+      background-color: #666;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    #use-manual-input-btn:hover {
+      background-color: #555;
+    }
+    
+    /* Screenshot counter styling */
+    .screenshot-counter {
+      margin: 10px 0;
+      font-size: 14px;
+      color: #666;
+      text-align: right;
+      padding: 0 10px;
+    }
+    
+    /* Add black transparency to all solution sections */
+    #explanation, 
+    #complexity,
+    #code-solution,
+    pre.code-solution,
+    pre.code-solution.line-numbers,
+    pre.code-solution.language-java,
+    pre.code-solution.line-numbers.language-java {
+      background-color: rgba(0, 0, 0, 0.8) !important;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      position: relative;
+      color: #fff;
+    }
+    
+    /* Make code solution horizontally scrollable with no line wrapping */
+    #code-solution {
+      overflow-x: auto;
+      white-space: pre;
+      padding-right: 40px; /* Make room for the copy button */
+    }
+    
+    #code-solution code,
+    pre.code-solution code,
+    pre.code-solution.line-numbers code {
+      white-space: pre !important;
+      word-wrap: normal !important;
+      word-break: keep-all !important;
+      display: inline-block;
+      min-width: 100%;
+      font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    }
+    
+    /* Remove any default background from code solution */
+    #code-solution code,
+    pre.code-solution code,
+    pre.code-solution.line-numbers code {
+      background: transparent !important;
+      color: rgba(255, 255, 255, 0.95) !important;
+    }
+    
+    /* Force black background for Prism line numbers */
+    .line-numbers .line-numbers-rows {
+      background-color: rgba(0, 0, 0, 0.8) !important;
+    }
+    
+    /* Override Prism tomorrow theme */
+    pre[class*="language-"],
+    code[class*="language-"] {
+      background-color: rgba(0, 0, 0, 0.8) !important;
+    }
+    
+    /* Code copy button */
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: rgba(255, 255, 255, 0.3);
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      color: #000;
+      z-index: 10;
+    }
+    
+    .copy-btn:hover {
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .copy-btn:active {
+      background-color: rgba(255, 255, 255, 0.7);
+    }
+    
+    /* Ensure text is fully visible despite the transparent background */
+    #explanation p, 
+    #explanation h1, 
+    #explanation h2, 
+    #explanation h3, 
+    #explanation li, 
+    #explanation code,
+    #complexity p, 
+    #complexity h1,
+    #complexity h2, 
+    #complexity h3, 
+    #complexity code,
+    #code-solution code {
+      color: rgba(255, 255, 255, 0.95);
+    }
+    
+    /* Override Prism theme for dark background */
+    #code-solution .token.comment,
+    #code-solution .token.prolog,
+    #code-solution .token.doctype,
+    #code-solution .token.cdata {
+      color: #8292a2;
+    }
+
+    #code-solution .token.punctuation {
+      color: #f8f8f2;
+    }
+
+    #code-solution .token.namespace {
+      opacity: .7;
+    }
+
+    #code-solution .token.property,
+    #code-solution .token.tag,
+    #code-solution .token.constant,
+    #code-solution .token.symbol,
+    #code-solution .token.deleted {
+      color: #f92672;
+    }
+
+    #code-solution .token.boolean,
+    #code-solution .token.number {
+      color: #ae81ff;
+    }
+
+    #code-solution .token.selector,
+    #code-solution .token.attr-name,
+    #code-solution .token.string,
+    #code-solution .token.char,
+    #code-solution .token.builtin,
+    #code-solution .token.inserted {
+      color: #a6e22e;
+    }
+
+    #code-solution .token.operator,
+    #code-solution .token.entity,
+    #code-solution .token.url,
+    #code-solution .language-css .token.string,
+    #code-solution .style .token.string,
+    #code-solution .token.variable {
+      color: #f8f8f2;
+    }
+
+    #code-solution .token.atrule,
+    #code-solution .token.attr-value,
+    #code-solution .token.function,
+    #code-solution .token.class-name {
+      color: #e6db74;
+    }
+
+    #code-solution .token.keyword {
+      color: #66d9ef;
+    }
+
+    #code-solution .token.regex,
+    #code-solution .token.important {
+      color: #fd971f;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="titlebar">
+      <div class="title">CodeWhisperer</div>
+      <div class="controls">
+        <button id="toggleBtn" title="Toggle Visibility (⌘B / Ctrl+B)">👁️</button>
+        <button id="quitBtn" title="Quit (Alt+F4)">✕</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div id="welcome-screen" class="screen">
+        <h1>CodeWhisperer</h1>
+        <p>Your AI-powered Interview Companion</p>
+        <div class="keyboard-shortcuts">
+          <h3>Keyboard Shortcuts</h3>
+          <ul>
+            <li><kbd>⌘B</kbd> or <kbd>Ctrl+B</kbd> - Toggle visibility</li>
+            <li><kbd>⌘H</kbd> or <kbd>Ctrl+H</kbd> - Take screenshot</li>
+            <li><kbd>⌘V</kbd> or <kbd>Ctrl+V</kbd> - Toggle voice recording</li>
+            <li><kbd>⌘↵</kbd> or <kbd>Ctrl+Enter</kbd> - Generate solution</li>
+            <li><kbd>⌘↑↓←→</kbd> or <kbd>Ctrl+arrows</kbd> - Move window</li>
+            <li><kbd>⌘R</kbd> or <kbd>Ctrl+R</kbd> - Reset app</li>
+            <li><kbd>Alt+F4</kbd> - Quit app</li>
+          </ul>
+        </div>
+        
+        <div class="settings-section">
+          <h3>Settings</h3>
+          <div class="setting-item">
+            <label for="autostart-toggle">Start on computer boot:</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="autostart-toggle">
+              <span class="toggle-slider"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="screenshot-screen" class="screen hidden">
+        <h2>Problem Capture</h2>
+        <p>Use <kbd>⌘H</kbd> or <kbd>Ctrl+H</kbd> to capture the problem statement.</p>
+        <div id="screenshot-counter" class="screenshot-counter">Screenshots: 0/5</div>
+        <div id="screenshot-container" class="screenshot-container"></div>
+        <button id="analyze-btn" class="action-button">Analyze Problem (⌘↵ / Ctrl+Enter)</button>
+        <button id="reset-btn" class="reset-button">Reset (⌘R / Ctrl+R)</button>
+      </div>
+      
+      <div id="voice-screen" class="screen hidden">
+        <h2>Voice Transcription</h2>
+        <div id="voice-section">
+          <h3>Voice Input</h3>
+          <div id="voice-status">Ready to record</div>
+          <div id="voice-question" placeholder="Your transcribed speech will appear here..."></div>
+          <div id="voice-controls">
+            <button id="voice-record-btn">Start Recording</button>
+            <button id="voice-analyze-btn" disabled>Generate Solution</button>
+          </div>
+          
+          <!-- Manual input fallback -->
+          <div class="manual-input">
+            <h4>Manual Input (if speech fails)</h4>
+            <textarea id="manual-question-input" placeholder="Type or paste your interview question here..." rows="3"></textarea>
+            <button id="use-manual-input-btn">Use This Question</button>
+          </div>
+        </div>
+        <button id="voice-reset-btn" class="reset-button">Reset (⌘R / Ctrl+R)</button>
+      </div>
+
+      <div id="solution-screen" class="screen hidden">
+        <h2>Solution</h2>
+        <div id="loading-indicator" class="hidden">
+          <div class="spinner"></div>
+          <p>Generating solution...</p>
+        </div>
+        <div id="solution-container">
+          <div id="explanation" class="explanation"></div>
+          <pre id="code-solution" class="code-solution line-numbers"><code></code></pre>
+          <div id="complexity" class="complexity"></div>
+        </div>
+        <button id="back-btn" class="back-button">Back to Screenshots</button>
+        <button id="reset-solution-btn" class="reset-button">Reset (⌘R / Ctrl+R)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load Prism.js for code syntax highlighting -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+  
+  <!-- Load the application renderer -->
+  <script src="renderer.js"></script>
+</body>
+</html> 
